@@ -21,4 +21,4 @@ View your app in AI Studio: https://ai.studio/apps/f1fb665a-8589-4672-9b50-5571f
 =======
 # MeetingMind
 MeetingMind is an AI-powered meeting intelligence platform that converts raw meeting assets (audio, transcripts, or text notes) into structured, actionable insights, eliminating manual overhead and ensuring accountability.
->>>>>>> 62b0940297b2093b842488c04f1fbd17e614f1e3
+
