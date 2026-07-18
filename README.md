@@ -15,6 +15,32 @@ MeetingMind is an AI-powered meeting intelligence platform that helps individual
 
 MeetingMind solves this by combining AI with a full-stack application. Users can securely log in, upload meeting transcripts or recordings, receive AI-generated summaries and action items, assign tasks, and maintain a searchable history of meetings. Instead of repeatedly asking an AI about individual conversations, teams build a centralized knowledge base where past discussions, decisions, and responsibilities are preserved and easily accessible.
 
+# Tech Stack
+
+Frontend:
+```text
+React
+TypeScript
+Vite
+Tailwind CSS
+Lucide React icons
+```
+
+Backend:
+```text
+Node.js
+Express
+TypeScript
+Gemini API via @google/genai
+File-based JSON storage
+```
+
+Runtime:
+```text
+Development: npm run dev
+Production: npm run build && npm start
+```
+
 # Architecture
 User Browser
    ↓
@@ -29,7 +55,7 @@ Structured meeting response
 meetings_db.json
    ↓
 React UI displays dashboard
-## Architecture
+
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
