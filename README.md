@@ -29,7 +29,9 @@ Structured meeting response
 meetings_db.json
    ↓
 React UI displays dashboard
+## Architecture
 
+```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                          CLIENT LAYER (React)                          │
 │                                                                        │
@@ -55,3 +57,4 @@ React UI displays dashboard
                     │  meetings_db.json   │   │  Google Gemini API   │
                     │   (Structured DB)   │   │ (gemini-3.5-flash)   │
                     └─────────────────────┘   └──────────────────────┘
+```
