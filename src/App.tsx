@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import MeetingList from './components/MeetingList';
 import IngestPanel from './components/IngestPanel';
 import MeetingDetails from './components/MeetingDetails';
+import AuthPage from './components/AuthPage';
+import SettingsPage from './components/SettingsPage';
 import { Meeting, Task, ChatHistoryItem } from './types';
-import { Sparkles, Library, CheckSquare, Plus, AlertCircle, RefreshCw, Layers } from 'lucide-react';
+import { Sparkles, Library, CheckSquare, Plus, AlertCircle, RefreshCw, Layers, Settings, LogOut } from 'lucide-react';
 
 export default function App() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -14,28 +16,63 @@ export default function App() {
   const [isFollowUpGenerating, setIsFollowUpGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Load meetings on mount
+  // Authentication & Settings States
+  const [user, setUser] = useState<{ name: string; email: string; title: string; company: string } | null>(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Load user session on mount
   useEffect(() => {
-    fetchMeetings();
+    const savedUser = localStorage.getItem('meetingmind_user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (e) {
+        console.error('Failed to parse saved user', e);
+        setIsLoading(false);
+      }
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
-  const fetchMeetings = async () => {
+  // Fetch meetings whenever the active user changes
+  useEffect(() => {
+    if (user?.email) {
+      fetchMeetings(user.email);
+    } else {
+      setMeetings([]);
+      setSelectedId(null);
+      setIsLoading(false);
+    }
+  }, [user?.email]);
+
+  const fetchMeetings = async (userEmail?: string) => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/meetings');
+      const emailToUse = userEmail || user?.email;
+      if (!emailToUse) {
+        setMeetings([]);
+        setSelectedId(null);
+        return;
+      }
+
+      const response = await fetch(`/api/meetings?userEmail=${encodeURIComponent(emailToUse)}`);
       if (!response.ok) {
         throw new Error('Could not fetch meetings');
       }
       const data = await response.json();
       setMeetings(data);
-      if (data.length > 0 && selectedId === 'sample-1') {
-        setSelectedId(data[0].id);
-      } else if (data.length === 0) {
+      if (data.length > 0) {
+        const exists = data.some((m: Meeting) => m.id === selectedId);
+        if (!exists || selectedId === 'sample-1') {
+          setSelectedId(data[0].id);
+        }
+      } else {
         setSelectedId(null);
       }
     } catch (err: any) {
       console.error(err);
-      setError('Failed to load meeting list from database. Running in offline fallback mode.');
+      setError('Failed to load meeting list from database.');
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +94,10 @@ export default function App() {
       const response = await fetch('/api/meetings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+          ...payload,
+          userEmail: user?.email
+        })
       });
 
       if (!response.ok) {
@@ -211,6 +251,18 @@ export default function App() {
 
   const selectedMeeting = meetings.find(m => m.id === selectedId) || null;
 
+  // AUTHENTICATION GATE: Redirect unauthenticated requests to our onboarding page
+  if (!user) {
+    return (
+      <AuthPage
+        onLoginSuccess={(loggedInUser) => {
+          setUser(loggedInUser);
+          localStorage.setItem('meetingmind_user', JSON.stringify(loggedInUser));
+        }}
+      />
+    );
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-100 font-sans text-slate-800">
       {/* LEFT SIDEBAR: previous meetings */}
@@ -218,38 +270,60 @@ export default function App() {
         <MeetingList
           meetings={meetings}
           selectedId={selectedId}
-          onSelectMeeting={setSelectedId}
+          onSelectMeeting={(id) => {
+            setSelectedId(id);
+            setIsSettingsOpen(false); // Close settings when selecting another meeting
+          }}
           onDeleteMeeting={handleDeleteMeeting}
-          onStartNewMeeting={handleStartNewMeeting}
+          onStartNewMeeting={() => {
+            handleStartNewMeeting();
+            setIsSettingsOpen(false);
+          }}
+          user={user}
+          onOpenSettings={() => setIsSettingsOpen(true)}
+          onLogout={() => {
+            setUser(null);
+            localStorage.removeItem('meetingmind_user');
+          }}
         />
       </div>
 
       {/* RIGHT WORKSPACE */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Mobile Navigation bar */}
-        <div className="bg-slate-900 text-white px-4 py-3 flex items-center justify-between md:hidden shrink-0">
+        <div className="bg-slate-950 text-white px-4 py-3 flex items-center justify-between md:hidden shrink-0">
           <div className="flex items-center gap-2">
             <Layers className="w-5 h-5 text-indigo-400" />
-            <span className="font-bold text-sm tracking-tight">MeetingMind</span>
+            <span className="font-extrabold text-sm uppercase tracking-tight">MeetingMind</span>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex items-center gap-2">
             <button
-              onClick={handleStartNewMeeting}
-              className="text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg cursor-pointer"
+              onClick={() => {
+                handleStartNewMeeting();
+                setIsSettingsOpen(false);
+              }}
+              className="text-[10px] font-black uppercase bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-full cursor-pointer"
             >
-              + New Asset
+              + New
             </button>
-            <select
-              value={selectedId || ''}
-              onChange={(e) => setSelectedId(e.target.value || null)}
-              className="text-xs bg-slate-800 border border-slate-700 rounded px-2 py-1 text-white max-w-[140px]"
+            <button
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              className="p-1 text-slate-300 hover:text-white"
+              title="Settings"
             >
-              <option value="">-- Start New --</option>
-              {meetings.map(m => (
-                <option key={m.id} value={m.id}>{m.title}</option>
-              ))}
-            </select>
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => {
+                setUser(null);
+                localStorage.removeItem('meetingmind_user');
+              }}
+              className="p-1 text-slate-400 hover:text-rose-400"
+              title="Logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -260,6 +334,16 @@ export default function App() {
               <LoaderSpinner />
               <p className="text-xs font-medium text-slate-500 font-mono animate-pulse">Initializing MeetingMind workspace...</p>
             </div>
+          ) : isSettingsOpen ? (
+            // SETTINGS PAGE ROUTE
+            <SettingsPage
+              user={user}
+              onUpdateUser={(updated) => {
+                setUser(updated);
+                localStorage.setItem('meetingmind_user', JSON.stringify(updated));
+              }}
+              onClose={() => setIsSettingsOpen(false)}
+            />
           ) : selectedId === null ? (
             // INGESTION FORM VIEW
             <div className="h-full overflow-y-auto bg-slate-50">
@@ -290,7 +374,10 @@ export default function App() {
                 Ingest meeting notes, upload verbatim transcripts, or submit voice recordings to activate the intelligence engine.
               </p>
               <button
-                onClick={handleStartNewMeeting}
+                onClick={() => {
+                  handleStartNewMeeting();
+                  setIsSettingsOpen(false);
+                }}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2 px-4 rounded-xl shadow-md cursor-pointer transition"
               >
                 + Ingest First Asset

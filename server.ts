@@ -25,7 +25,7 @@ const ai = new GoogleGenAI({
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   // Setup middleware with large payload limit to support base64 audio data
   app.use(express.json({ limit: '50mb' }));
@@ -38,11 +38,22 @@ async function startServer() {
     res.json({ status: 'ok', time: new Date().toISOString() });
   });
 
-  // Get all meetings
+  // Get all meetings (filtered by userEmail)
   app.get('/api/meetings', (req, res) => {
     try {
       const meetings = readDatabase();
-      // Exclude heavy transcriptText and followUpEmail for listing if desired, but we can send all for simplicity
+      const userEmail = req.query.userEmail as string | undefined;
+
+      if (userEmail) {
+        // Filter meetings belonging to this specific user.
+        // If a meeting doesn't have an email, it defaults to the sample demo account email.
+        const filtered = meetings.filter(m => {
+          const owner = m.userEmail || 'sarah.jenkins@meetingmind.ai';
+          return owner.trim().toLowerCase() === userEmail.trim().toLowerCase();
+        });
+        return res.json(filtered);
+      }
+
       res.json(meetings);
     } catch (error) {
       console.error('Error fetching meetings:', error);
@@ -93,7 +104,7 @@ async function startServer() {
   // Create/Process a meeting (from Notes, Transcript, or Audio)
   app.post('/api/meetings', async (req, res) => {
     try {
-      const { type, title: customTitle, content, audioData, mimeType, fileName } = req.body;
+      const { type, title: customTitle, content, audioData, mimeType, fileName, userEmail } = req.body;
 
       if (!apiKey) {
         return res.status(500).json({ error: 'Gemini API key is missing. Please configure it in Settings > Secrets.' });
@@ -219,7 +230,8 @@ Analyze this content, structure it, and extract all requested deliverables. ${cu
           deadline: t.deadline || 'N/A',
           status: 'pending'
         })),
-        chatHistory: []
+        chatHistory: [],
+        userEmail: userEmail || 'sarah.jenkins@meetingmind.ai'
       };
 
       const meetings = readDatabase();

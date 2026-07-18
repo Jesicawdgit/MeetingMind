@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Meeting } from '../types.js';
-import { FileText, Mic, AlignLeft, Calendar, Trash2, Search, Plus, CheckSquare } from 'lucide-react';
+import { FileText, Mic, AlignLeft, Trash2, Search, Plus, Settings, LogOut } from 'lucide-react';
 
 interface MeetingListProps {
   meetings: Meeting[];
@@ -8,6 +8,9 @@ interface MeetingListProps {
   onSelectMeeting: (id: string) => void;
   onDeleteMeeting: (id: string, e: React.MouseEvent) => void;
   onStartNewMeeting: () => void;
+  user?: { name: string; email: string; title: string; company: string } | null;
+  onOpenSettings?: () => void;
+  onLogout?: () => void;
 }
 
 export default function MeetingList({
@@ -15,7 +18,10 @@ export default function MeetingList({
   selectedId,
   onSelectMeeting,
   onDeleteMeeting,
-  onStartNewMeeting
+  onStartNewMeeting,
+  user,
+  onOpenSettings,
+  onLogout
 }: MeetingListProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -168,6 +174,40 @@ export default function MeetingList({
           })
         )}
       </div>
+
+      {/* Profile / Account Footer */}
+      {user && (
+        <div className="p-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between gap-2.5 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-slate-950 border border-slate-950 text-white flex items-center justify-center font-black text-xs shrink-0">
+              {user.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase()}
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-black text-slate-800 truncate leading-tight">{user.name}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide truncate mt-0.5 leading-none">{user.company}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              onClick={onOpenSettings}
+              className="p-1.5 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+              title="Account Settings"
+              id="btn-sidebar-settings"
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={onLogout}
+              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+              title="Log Out"
+              id="btn-sidebar-logout"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

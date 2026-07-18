@@ -28,6 +28,7 @@ export interface Meeting {
   followUpEmail?: string;
   tasks: Task[];
   chatHistory: ChatHistoryItem[];
+  userEmail?: string;
 }
 
 export interface ProcessingResult {
