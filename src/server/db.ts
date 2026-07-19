@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore, Firestore } from 'firebase-admin/firestore';
 import { Meeting } from '../types.js';
 
 const DB_FILE_PATH = path.join(process.cwd(), 'meetings_db.json');
@@ -143,24 +145,106 @@ Rahul`,
   }
 ];
 
-export function readDatabase(): Meeting[] {
+let firestoreDb: Firestore | null = null;
+let isFirebaseAttempted = false;
+
+function getFirestoreDb(): Firestore | null {
+  if (isFirebaseAttempted) return firestoreDb;
+  isFirebaseAttempted = true;
+
+  try {
+    const projectId = process.env.FIREBASE_PROJECT_ID;
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+
+    if (projectId && clientEmail && privateKey) {
+      if (getApps().length === 0) {
+        initializeApp({
+          credential: cert({
+            projectId,
+            clientEmail,
+            privateKey: privateKey.replace(/\\n/g, '\n'),
+          }),
+        });
+      }
+      firestoreDb = getFirestore();
+      console.log('Firebase Firestore initialized successfully via Environment Variables.');
+    } else {
+      console.log('Firebase credentials not complete in .env. Using local JSON database (meetings_db.json).');
+    }
+  } catch (error) {
+    console.error('Failed to initialize Firebase Admin SDK:', error);
+  }
+
+  return firestoreDb;
+}
+
+export async function readDatabase(): Promise<Meeting[]> {
+  const db = getFirestoreDb();
+  if (db) {
+    try {
+      const snapshot = await db.collection('meetings').get();
+      if (!snapshot.empty) {
+        const meetings: Meeting[] = [];
+        snapshot.forEach(doc => {
+          meetings.push({ id: doc.id, ...doc.data() } as Meeting);
+        });
+        // Sort by date descending
+        return meetings.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      }
+      
+      console.log('Firestore collection is empty. Seeding with initial sample meetings...');
+      await writeDatabase(INITIAL_MEETINGS);
+      return INITIAL_MEETINGS;
+    } catch (error) {
+      console.error('Error reading from Firestore, falling back to local file:', error);
+    }
+  }
+
   try {
     if (!fs.existsSync(DB_FILE_PATH)) {
-      writeDatabase(INITIAL_MEETINGS);
+      fs.writeFileSync(DB_FILE_PATH, JSON.stringify(INITIAL_MEETINGS, null, 2), 'utf-8');
       return INITIAL_MEETINGS;
     }
     const data = fs.readFileSync(DB_FILE_PATH, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
-    console.error('Error reading meetings database, returning sample data:', error);
+    console.error('Error reading local meetings database:', error);
     return INITIAL_MEETINGS;
   }
 }
 
-export function writeDatabase(meetings: Meeting[]): void {
+export async function writeDatabase(meetings: Meeting[]): Promise<void> {
+  // 1. Local copy first for high safety
   try {
     fs.writeFileSync(DB_FILE_PATH, JSON.stringify(meetings, null, 2), 'utf-8');
   } catch (error) {
-    console.error('Error writing meetings database:', error);
+    console.error('Error writing local database file:', error);
+  }
+
+  // 2. Synchronize to Firestore if available
+  const db = getFirestoreDb();
+  if (db) {
+    try {
+      const batch = db.batch();
+      
+      // Delete previous meetings
+      const snapshot = await db.collection('meetings').get();
+      snapshot.forEach(doc => {
+        batch.delete(doc.ref);
+      });
+      
+      // Write new meetings
+      meetings.forEach(meeting => {
+        const docRef = db.collection('meetings').doc(meeting.id);
+        const { id, ...data } = meeting;
+        batch.set(docRef, data);
+      });
+      
+      await batch.commit();
+      console.log('Successfully persisted and synchronized all meetings to Firestore.');
+    } catch (error) {
+      console.error('Error writing to Firestore batch:', error);
+    }
   }
 }

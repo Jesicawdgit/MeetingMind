@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Meeting } from '../types.js';
-import { FileText, Mic, AlignLeft, Trash2, Search, Plus, Settings, LogOut } from 'lucide-react';
+import { FileText, Mic, AlignLeft, Calendar, Trash2, Search, Plus, CheckSquare, Settings, LogOut } from 'lucide-react';
 
 interface MeetingListProps {
   meetings: Meeting[];
@@ -177,13 +177,13 @@ export default function MeetingList({
 
       {/* Profile / Account Footer */}
       {user && (
-        <div className="p-4 border-t border-slate-200 bg-slate-50/50 flex items-center justify-between gap-2.5 shrink-0">
+        <div className="p-4 border-t border-slate-150 bg-slate-50/50 flex items-center justify-between gap-2.5 shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-8 h-8 rounded-full bg-slate-950 border border-slate-950 text-white flex items-center justify-center font-black text-xs shrink-0">
               {user.name.split(' ').map(n => n.charAt(0)).join('').toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-black text-slate-800 truncate leading-tight">{user.name}</p>
+              <p className="text-xs font-black text-slate-850 truncate leading-tight">{user.name}</p>
               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide truncate mt-0.5 leading-none">{user.company}</p>
             </div>
           </div>

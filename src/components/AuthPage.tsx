@@ -167,7 +167,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 <CheckCircle2 className="w-5 h-5 text-indigo-400" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wide">Structured Task Pipelines</h3>
+                <h3 className="text-sm font-bold text-slate-150 uppercase tracking-wide">Structured Task Pipelines</h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                   Forced JSON outputs structure deadlines, priorities, and ownership automatically to guarantee zero-parsing failures.
                 </p>
@@ -179,7 +179,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 <ShieldCheck className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wide">100% Grounded Context Chat</h3>
+                <h3 className="text-sm font-bold text-slate-150 uppercase tracking-wide">100% Grounded Context Chat</h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                   Leverage Gemini's large-context window. Bypasses buggy RAG chunking to search verbatim transcripts with complete accuracy.
                 </p>
@@ -191,7 +191,7 @@ export default function AuthPage({ onLoginSuccess }: AuthPageProps) {
                 <Zap className="w-5 h-5 text-indigo-400" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wide">Immediate Follow-Up Drafting</h3>
+                <h3 className="text-sm font-bold text-slate-150 uppercase tracking-wide">Immediate Follow-Up Drafting</h3>
                 <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                   Generate client-ready summary emails in professional markdown instantly, then instruct Gemini to fine-tune tone or priorities.
                 </p>

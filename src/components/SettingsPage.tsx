@@ -191,7 +191,7 @@ export default function SettingsPage({ user, onUpdateUser, onClose }: SettingsPa
               <p className="text-xs text-slate-500 leading-relaxed font-semibold mb-4">
                 MeetingMind relies on Google's model integrations to parse raw audio/transcripts. The credentials are high-security parameters declared within your environment settings file.
               </p>
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 font-mono text-xs text-slate-700 space-y-1.5">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-150 font-mono text-xs text-slate-700 space-y-1.5">
                 <div className="flex justify-between">
                   <span>GEMINI_API_KEY</span>
                   <span className="text-emerald-600 font-bold">✓ ACTIVE (SERVER-SIDE)</span>

@@ -18,7 +18,3 @@ View your app in AI Studio: https://ai.studio/apps/f1fb665a-8589-4672-9b50-5571f
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
-=======
-# MeetingMind
-MeetingMind is an AI-powered meeting intelligence platform that converts raw meeting assets (audio, transcripts, or text notes) into structured, actionable insights, eliminating manual overhead and ensuring accountability.
->>>>>>> 62b0940297b2093b842488c04f1fbd17e614f1e3

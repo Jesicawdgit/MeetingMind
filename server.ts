@@ -25,7 +25,7 @@ const ai = new GoogleGenAI({
 
 async function startServer() {
   const app = express();
-  const PORT = Number(process.env.PORT) || 3000;
+  const PORT = 3000;
 
   // Setup middleware with large payload limit to support base64 audio data
   app.use(express.json({ limit: '50mb' }));
@@ -39,9 +39,9 @@ async function startServer() {
   });
 
   // Get all meetings (filtered by userEmail)
-  app.get('/api/meetings', (req, res) => {
+  app.get('/api/meetings', async (req, res) => {
     try {
-      const meetings = readDatabase();
+      const meetings = await readDatabase();
       const userEmail = req.query.userEmail as string | undefined;
 
       if (userEmail) {
@@ -62,9 +62,9 @@ async function startServer() {
   });
 
   // Get single meeting with details
-  app.get('/api/meetings/:id', (req, res) => {
+  app.get('/api/meetings/:id', async (req, res) => {
     try {
-      const meetings = readDatabase();
+      const meetings = await readDatabase();
       const meeting = meetings.find(m => m.id === req.params.id);
       if (!meeting) {
         return res.status(404).json({ error: 'Meeting not found' });
@@ -77,10 +77,10 @@ async function startServer() {
   });
 
   // Toggle task status
-  app.post('/api/meetings/:id/tasks/:taskId/toggle', (req, res) => {
+  app.post('/api/meetings/:id/tasks/:taskId/toggle', async (req, res) => {
     try {
       const { id, taskId } = req.params;
-      const meetings = readDatabase();
+      const meetings = await readDatabase();
       const meetingIndex = meetings.findIndex(m => m.id === id);
       if (meetingIndex === -1) {
         return res.status(404).json({ error: 'Meeting not found' });
@@ -92,7 +92,7 @@ async function startServer() {
       }
 
       task.status = task.status === 'completed' ? 'pending' : 'completed';
-      writeDatabase(meetings);
+      await writeDatabase(meetings);
 
       res.json({ success: true, task });
     } catch (error) {
@@ -234,9 +234,9 @@ Analyze this content, structure it, and extract all requested deliverables. ${cu
         userEmail: userEmail || 'sarah.jenkins@meetingmind.ai'
       };
 
-      const meetings = readDatabase();
+      const meetings = await readDatabase();
       meetings.unshift(newMeeting);
-      writeDatabase(meetings);
+      await writeDatabase(meetings);
 
       res.json(newMeeting);
     } catch (error: any) {
@@ -259,7 +259,7 @@ Analyze this content, structure it, and extract all requested deliverables. ${cu
         return res.status(500).json({ error: 'Gemini API key is missing. Please configure it in Settings > Secrets.' });
       }
 
-      const meetings = readDatabase();
+      const meetings = await readDatabase();
       const meetingIndex = meetings.findIndex(m => m.id === id);
       if (meetingIndex === -1) {
         return res.status(404).json({ error: 'Meeting not found' });
@@ -307,7 +307,7 @@ Provide your professional, direct, and conversational answer:`;
       };
 
       meetings[meetingIndex].chatHistory.push(chatItem);
-      writeDatabase(meetings);
+      await writeDatabase(meetings);
 
       res.json(chatItem);
     } catch (error: any) {
@@ -326,7 +326,7 @@ Provide your professional, direct, and conversational answer:`;
         return res.status(500).json({ error: 'Gemini API key is missing. Please configure it in Settings > Secrets.' });
       }
 
-      const meetings = readDatabase();
+      const meetings = await readDatabase();
       const meetingIndex = meetings.findIndex(m => m.id === id);
       if (meetingIndex === -1) {
         return res.status(404).json({ error: 'Meeting not found' });
@@ -351,7 +351,7 @@ Return ONLY the markdown body of the follow-up email, starting with the subject 
 
       const updatedEmail = response.text || '';
       meetings[meetingIndex].followUpEmail = updatedEmail;
-      writeDatabase(meetings);
+      await writeDatabase(meetings);
 
       res.json({ success: true, followUpEmail: updatedEmail });
     } catch (error: any) {
@@ -361,17 +361,17 @@ Return ONLY the markdown body of the follow-up email, starting with the subject 
   });
 
   // Delete a meeting
-  app.delete('/api/meetings/:id', (req, res) => {
+  app.delete('/api/meetings/:id', async (req, res) => {
     try {
       const { id } = req.params;
-      const meetings = readDatabase();
+      const meetings = await readDatabase();
       const filtered = meetings.filter(m => m.id !== id);
 
       if (filtered.length === meetings.length) {
         return res.status(404).json({ error: 'Meeting not found' });
       }
 
-      writeDatabase(filtered);
+      await writeDatabase(filtered);
       res.json({ success: true });
     } catch (error) {
       console.error('Error deleting meeting:', error);
